@@ -106,11 +106,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
 
                             if (_searchedText.isNotEmpty) {
                               if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
-                                return NowPlayingListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
+                                return _NowPlayingListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
                               }
                               return Container();
                             } else {
-                              return NowPlayingListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
+                              return _NowPlayingListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
                             }
                           },
                           itemCount: _nowPlayingResponseModel.results.length,
@@ -128,8 +128,8 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
   }
 }
 
-class NowPlayingListTile extends StatelessWidget {
-  const NowPlayingListTile({
+class _NowPlayingListTile extends StatelessWidget {
+  const _NowPlayingListTile({
     Key? key,
     required this.screenHeight,
     required this.screenWidth,

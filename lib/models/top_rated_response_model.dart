@@ -56,7 +56,7 @@ class Results {
   late final String releaseDate;
   late final String title;
   late final bool video;
-  late final double voteAverage;
+  late final String voteAverage;
   late final int voteCount;
 
   Results.fromJson(Map<String, dynamic> json){
@@ -72,7 +72,7 @@ class Results {
     releaseDate = json['release_date'];
     title = json['title'];
     video = json['video'];
-    voteAverage = json['vote_average'];
+    voteAverage = json['vote_average'].toString();
     voteCount = json['vote_count'];
   }
 
