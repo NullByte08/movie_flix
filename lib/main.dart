@@ -1,32 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:movie_flix/home_page.dart';
+import 'package:movie_flix/models/application_model.dart';
+import 'package:movie_flix/now_playing_screen.dart';
+import 'package:movie_flix/top_rated_screen.dart';
+import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (BuildContext context) => ApplicationModel(),
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late PersistentTabController _controller;
+
+  @override
+  void initState() {
+    _controller = PersistentTabController(initialIndex: 0);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
+      home: PersistentTabView(
+        context,
+        controller: _controller,
+        screens: const [
+          NowPlayingScreen(),
+          TopRatedScreen(),
+        ],
+        items: [
+          PersistentBottomNavBarItem(
+            icon: const Icon(
+              Icons.movie_creation_outlined,
+            ),
+            title: "Now Playing",
+            activeColorPrimary: Colors.black,
+            inactiveColorPrimary: Colors.grey,
+          ),
+          PersistentBottomNavBarItem(
+            icon: const Icon(
+              Icons.star_border,
+            ),
+            title: "Top Rated",
+            activeColorPrimary: Colors.black,
+            inactiveColorPrimary: Colors.grey,
+          ),
+        ],
+        confineInSafeArea: true,
+        backgroundColor: Colors.amber,
+        itemAnimationProperties: const ItemAnimationProperties(
+          duration: Duration(milliseconds: 200),
+          curve: Curves.ease,
+        ),
+        screenTransitionAnimation: const ScreenTransitionAnimation(
+          animateTabTransition: true,
+          curve: Curves.ease,
+          duration: Duration(milliseconds: 200),
+        ),
+        navBarStyle: NavBarStyle.style6,
       ),
-      home: const HomePage(),
     );
   }
 }
-
-
