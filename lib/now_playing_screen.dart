@@ -102,7 +102,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                       ),
                       Expanded(
                         child: RefreshIndicator(
-                          onRefresh: (){
+                          onRefresh: () {
                             setState(() {
                               apiCalledOnce = false;
                               initializedOnce = false;
@@ -116,13 +116,35 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                             itemBuilder: (context, index) {
                               var result = _nowPlayingResponseModel.results[index];
 
+                              Key key = UniqueKey();
+
                               if (_searchedText.isNotEmpty) {
                                 if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
-                                  return _NowPlayingListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
+                                  return _NowPlayingListTile(
+                                    screenHeight: screenHeight,
+                                    screenWidth: screenWidth,
+                                    result: result,
+                                    onDismissed: (direction) {
+                                      setState(() {
+                                        _nowPlayingResponseModel.results.removeAt(index);
+                                      });
+                                    },
+                                    dismissKey: key,
+                                  );
                                 }
                                 return Container();
                               } else {
-                                return _NowPlayingListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
+                                return _NowPlayingListTile(
+                                  screenHeight: screenHeight,
+                                  screenWidth: screenWidth,
+                                  result: result,
+                                  dismissKey: key,
+                                  onDismissed: (direction) {
+                                    setState(() {
+                                      _nowPlayingResponseModel.results.removeAt(index);
+                                    });
+                                  },
+                                );
                               }
                             },
                             itemCount: _nowPlayingResponseModel.results.length,
@@ -147,64 +169,83 @@ class _NowPlayingListTile extends StatelessWidget {
     required this.screenHeight,
     required this.screenWidth,
     required this.result,
+    required this.dismissKey,
+    required this.onDismissed,
   }) : super(key: key);
 
   final double screenHeight;
   final double screenWidth;
   final Results result;
+  final Key dismissKey;
+  final Function(DismissDirection dismissDirection) onDismissed;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => MovieDescriptionScreen(
-                      overview: result.overview,
-                      movieTitle: result.title,
-                      releaseDate: result.releaseDate,
-                      voteAverage: double.parse(result.voteAverage),
-                      moviePosterUrl: result.posterPath,
-                    )));
-      },
-      child: Container(
-        height: screenHeight * 0.2,
-        width: screenWidth,
-        padding: const EdgeInsets.all(10),
-        child: Row(
-          children: [
-            Image.network(
-              imageBaseUrlSmallSize + result.posterPath,
-              fit: BoxFit.cover,
+    return Dismissible(
+      key: dismissKey,
+      background: Container(
+        color: Colors.red,
+        child: const Center(
+          child: Text(
+            "Removed",
+            style: TextStyle(
+              color: Colors.white,
             ),
-            const SizedBox(
-              width: 10,
-            ),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Text(
-                    result.title,
-                    style: TextStyle(fontSize: screenWidth * 0.05, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    result.overview,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 3,
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                ],
+          ),
+        ),
+      ),
+      onDismissed: onDismissed,
+      child: GestureDetector(
+        onTap: () {
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => MovieDescriptionScreen(
+                        overview: result.overview,
+                        movieTitle: result.title,
+                        releaseDate: result.releaseDate,
+                        voteAverage: double.parse(result.voteAverage),
+                        moviePosterUrl: result.posterPath,
+                      )));
+        },
+        child: Container(
+          height: screenHeight * 0.2,
+          width: screenWidth,
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: [
+              Image.network(
+                imageBaseUrlSmallSize + result.posterPath,
+                fit: BoxFit.cover,
               ),
-            ),
-          ],
+              const SizedBox(
+                width: 10,
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Text(
+                      result.title,
+                      style: TextStyle(fontSize: screenWidth * 0.05, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      result.overview,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 3,
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
