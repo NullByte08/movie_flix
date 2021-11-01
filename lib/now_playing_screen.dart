@@ -35,6 +35,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
       double screenWidth = constraints.maxWidth;
       return Scaffold(
         backgroundColor: Colors.amber,
+        resizeToAvoidBottomInset: false,
         body: SafeArea(
           child: FutureBuilder<NowPlayingResponseModel>(
               future: fetchNowPlayingList,
@@ -100,20 +101,32 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                         thickness: 1,
                       ),
                       Expanded(
-                        child: ListView.builder(
-                          itemBuilder: (context, index) {
-                            var result = _nowPlayingResponseModel.results[index];
+                        child: RefreshIndicator(
+                          onRefresh: (){
+                            setState(() {
+                              apiCalledOnce = false;
+                              initializedOnce = false;
+                            });
+                            return Future.value();
+                          },
+                          color: Colors.redAccent,
+                          backgroundColor: Colors.amber,
+                          child: ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              var result = _nowPlayingResponseModel.results[index];
 
-                            if (_searchedText.isNotEmpty) {
-                              if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
+                              if (_searchedText.isNotEmpty) {
+                                if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
+                                  return _NowPlayingListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
+                                }
+                                return Container();
+                              } else {
                                 return _NowPlayingListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
                               }
-                              return Container();
-                            } else {
-                              return _NowPlayingListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
-                            }
-                          },
-                          itemCount: _nowPlayingResponseModel.results.length,
+                            },
+                            itemCount: _nowPlayingResponseModel.results.length,
+                          ),
                         ),
                       ),
                     ],

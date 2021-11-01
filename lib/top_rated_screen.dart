@@ -37,6 +37,7 @@ class _TopRatedScreenState extends State<TopRatedScreen> {
         double screenWidth = constraints.maxWidth;
         return Scaffold(
           backgroundColor: Colors.amber,
+          resizeToAvoidBottomInset: false,
           body: SafeArea(
             child: FutureBuilder<TopRatedResponseModel>(
               future: fetchTopRatedList,
@@ -102,20 +103,32 @@ class _TopRatedScreenState extends State<TopRatedScreen> {
                         thickness: 1,
                       ),
                       Expanded(
-                        child: ListView.builder(
-                          itemBuilder: (context, index) {
-                            var result = _topRatedResponseModel.results[index];
+                        child: RefreshIndicator(
+                          onRefresh: (){
+                            setState(() {
+                              apiCalledOnce = false;
+                              initializedOnce = false;
+                            });
+                            return Future.value();
+                          },
+                          color: Colors.redAccent,
+                          backgroundColor: Colors.amber,
+                          child: ListView.builder(
+                            physics: const BouncingScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              var result = _topRatedResponseModel.results[index];
 
-                            if (_searchedText.isNotEmpty) {
-                              if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
+                              if (_searchedText.isNotEmpty) {
+                                if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
+                                  return _TopRatedListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
+                                }
+                                return Container();
+                              } else {
                                 return _TopRatedListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
                               }
-                              return Container();
-                            } else {
-                              return _TopRatedListTile(screenHeight: screenHeight, screenWidth: screenWidth, result: result);
-                            }
-                          },
-                          itemCount: _topRatedResponseModel.results.length,
+                            },
+                            itemCount: _topRatedResponseModel.results.length,
+                          ),
                         ),
                       ),
                     ],
