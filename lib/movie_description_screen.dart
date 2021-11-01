@@ -30,7 +30,6 @@ class _MovieDescriptionScreenState extends State<MovieDescriptionScreen> {
         double screenWidth = constraints.maxWidth;
         return Scaffold(
           appBar: AppBar(
-            backgroundColor: Colors.amber,
             leading: GestureDetector(
               onTap: () {
                 Navigator.pop(context);
@@ -38,7 +37,7 @@ class _MovieDescriptionScreenState extends State<MovieDescriptionScreen> {
               child: Padding(
                 padding: const EdgeInsets.only(left: 15.0),
                 child: Row(
-                  children: [
+                  children: const [
                     Icon(
                       Icons.arrow_back_ios,
                       color: Colors.grey,
@@ -79,19 +78,19 @@ class _MovieDescriptionScreenState extends State<MovieDescriptionScreen> {
                         children: [
                           Text(
                             widget.movieTitle,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20
                             ),
                           ),
-                          SizedBox(height: 20,),
+                          const SizedBox(height: 20,),
                           Text(
                             widget.releaseDate,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                             ),
                           ),
-                          SizedBox(height: 5,),
+                          const SizedBox(height: 5,),
                           Row(
                             children: [
                               const Icon(
@@ -100,23 +99,23 @@ class _MovieDescriptionScreenState extends State<MovieDescriptionScreen> {
                               ),
                               Text(
                                 (widget.voteAverage * 10).toString(),
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.white,
                                 ),
                               )
                             ],
                           ),
-                          SizedBox(height: 5,),
+                          const SizedBox(height: 5,),
                           Text(
                             widget.overview,
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: Colors.white,
                             ),
                           )
                         ],
                       ),
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 15,
                     ),
                   ],

@@ -35,93 +35,106 @@ class _TopRatedScreenState extends State<TopRatedScreen> {
       builder: (context, constraints) {
         double screenHeight = constraints.maxHeight;
         double screenWidth = constraints.maxWidth;
-        return Scaffold(
-          backgroundColor: Colors.amber,
-          resizeToAvoidBottomInset: false,
-          body: SafeArea(
-            child: FutureBuilder<TopRatedResponseModel>(
-              future: fetchTopRatedList,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      "Cannot fetch the \"Top Rated\" list. Error: ${snapshot.error}",
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
-
-                if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                  if (!initializedOnce) {
-                    initializedOnce = true;
-                    _topRatedResponseModel = snapshot.data!;
+        return Consumer<ApplicationModel>(builder: (context, pr, _) {
+          return Scaffold(
+            resizeToAvoidBottomInset: false,
+            body: SafeArea(
+              child: FutureBuilder<TopRatedResponseModel>(
+                future: fetchTopRatedList,
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        "Cannot fetch the \"Top Rated\" list. Error: ${snapshot.error}",
+                        textAlign: TextAlign.center,
+                      ),
+                    );
                   }
-                  return Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        width: screenWidth,
-                        color: Colors.amber[500],
-                        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                        child: TextField(
-                          controller: _searchedTextController,
-                          decoration: InputDecoration(
-                            fillColor: Colors.white,
-                            filled: true,
-                            hintText: "Search",
-                            prefixIcon: const Icon(
-                              Icons.search,
+
+                  if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                    if (!initializedOnce) {
+                      initializedOnce = true;
+                      _topRatedResponseModel = snapshot.data!;
+                    }
+                    return Column(
+                      children: [
+                        Container(
+                          height: 50,
+                          width: screenWidth,
+                          padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                          child: TextField(
+                            controller: _searchedTextController,
+                            decoration: InputDecoration(
+                              fillColor: pr.darkThemeForCompleteApp ? Colors.black54 : Colors.white,
+                              filled: true,
+                              hintText: "Search",
+                              prefixIcon: const Icon(
+                                Icons.search,
+                              ),
+                              enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.transparent)),
+                              focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.transparent)),
+                              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                              suffixIcon: (_searchedTextController.text.isNotEmpty)
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        _searchedTextController.text = "";
+                                        setState(() {
+                                          _searchedText = "";
+                                        });
+                                        FocusScope.of(context).unfocus(); // dismisses soft keyboard.
+                                      },
+                                      child: const Icon(
+                                        Icons.cancel,
+                                        color: Colors.grey,
+                                      ),
+                                    )
+                                  : null,
                             ),
-                            enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.transparent)),
-                            focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.transparent)),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                            suffixIcon: (_searchedTextController.text.isNotEmpty)
-                                ? GestureDetector(
-                                    onTap: () {
-                                      _searchedTextController.text = "";
-                                      setState(() {
-                                        _searchedText = "";
-                                      });
-                                      FocusScope.of(context).unfocus(); // dismisses soft keyboard.
-                                    },
-                                    child: const Icon(
-                                      Icons.cancel,
-                                      color: Colors.grey,
-                                    ),
-                                  )
-                                : null,
+                            onChanged: (value) {
+                              setState(() {
+                                _searchedText = value;
+                              });
+                            },
                           ),
-                          onChanged: (value) {
-                            setState(() {
-                              _searchedText = value;
-                            });
-                          },
                         ),
-                      ),
-                      const Divider(
-                        height: 0,
-                        thickness: 1,
-                      ),
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: () {
-                            setState(() {
-                              apiCalledOnce = false;
-                              initializedOnce = false;
-                            });
-                            return Future.value();
-                          },
-                          color: Colors.redAccent,
-                          backgroundColor: Colors.amber,
-                          child: ListView.builder(
-                            physics: const BouncingScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              var result = _topRatedResponseModel.results[index];
+                        const Divider(
+                          height: 0,
+                          thickness: 1,
+                        ),
+                        Expanded(
+                          child: RefreshIndicator(
+                            onRefresh: () {
+                              setState(() {
+                                apiCalledOnce = false;
+                                initializedOnce = false;
+                              });
+                              return Future.value();
+                            },
+                            color: Colors.redAccent,
+                            backgroundColor: pr.darkThemeForCompleteApp ? Colors.black54 : Colors.amber,
+                            child: ListView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                var result = _topRatedResponseModel.results[index];
 
-                              Key key = UniqueKey();
+                                Key key = UniqueKey();
 
-                              if (_searchedText.isNotEmpty) {
-                                if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
+                                if (_searchedText.isNotEmpty) {
+                                  if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
+                                    return _TopRatedListTile(
+                                      screenHeight: screenHeight,
+                                      screenWidth: screenWidth,
+                                      result: result,
+                                      onDismissed: (DismissDirection dismissDirection) {
+                                        setState(() {
+                                          _topRatedResponseModel.results.removeAt(index);
+                                        });
+                                      },
+                                      dismissKey: key,
+                                    );
+                                  }
+                                  return Container();
+                                } else {
                                   return _TopRatedListTile(
                                     screenHeight: screenHeight,
                                     screenWidth: screenWidth,
@@ -134,34 +147,21 @@ class _TopRatedScreenState extends State<TopRatedScreen> {
                                     dismissKey: key,
                                   );
                                 }
-                                return Container();
-                              } else {
-                                return _TopRatedListTile(
-                                  screenHeight: screenHeight,
-                                  screenWidth: screenWidth,
-                                  result: result,
-                                  onDismissed: (DismissDirection dismissDirection) {
-                                    setState(() {
-                                      _topRatedResponseModel.results.removeAt(index);
-                                    });
-                                  },
-                                  dismissKey: key,
-                                );
-                              }
-                            },
-                            itemCount: _topRatedResponseModel.results.length,
+                              },
+                              itemCount: _topRatedResponseModel.results.length,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  );
-                }
+                      ],
+                    );
+                  }
 
-                return nps.LoadingMoviesIndicator(screenWidth: screenWidth, screenHeight: screenHeight);
-              },
+                  return nps.LoadingMoviesIndicator(screenWidth: screenWidth, screenHeight: screenHeight);
+                },
+              ),
             ),
-          ),
-        );
+          );
+        });
       },
     );
   }

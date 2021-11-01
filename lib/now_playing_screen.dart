@@ -5,6 +5,7 @@ import 'package:movie_flix/models/constants.dart';
 import 'package:movie_flix/models/now_playing_response_model.dart';
 import 'package:movie_flix/movie_description_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NowPlayingScreen extends StatefulWidget {
   const NowPlayingScreen({Key? key}) : super(key: key);
@@ -30,134 +31,152 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
       fetchNowPlayingList = Provider.of<ApplicationModel>(context, listen: false).getNowPlayingList();
     }
 
-    return LayoutBuilder(builder: (context, constraints) {
-      double screenHeight = constraints.maxHeight;
-      double screenWidth = constraints.maxWidth;
-      return Scaffold(
-        backgroundColor: Colors.amber,
-        resizeToAvoidBottomInset: false,
-        body: SafeArea(
-          child: FutureBuilder<NowPlayingResponseModel>(
-              future: fetchNowPlayingList,
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(
-                      "Cannot fetch the \"Now Playing\" list. Error: ${snapshot.error}",
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
+    return Consumer<ApplicationModel>(builder: (context, pr, _) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          double screenHeight = constraints.maxHeight;
+          double screenWidth = constraints.maxWidth;
+          return Scaffold(
+            resizeToAvoidBottomInset: false,
+            body: SafeArea(
+              child: FutureBuilder<NowPlayingResponseModel>(
+                  future: fetchNowPlayingList,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          "Cannot fetch the \"Now Playing\" list. Error: ${snapshot.error}",
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    }
 
-                if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
-                  if (!initializedOnce) {
-                    initializedOnce = true;
-                    _nowPlayingResponseModel = snapshot.data!;
-                  }
-                  return Column(
-                    children: [
-                      Container(
-                        height: 50,
-                        width: screenWidth,
-                        color: Colors.amber[500],
-                        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
-                        child: TextField(
-                          controller: _searchedTextController,
-                          decoration: InputDecoration(
-                            fillColor: Colors.white,
-                            filled: true,
-                            hintText: "Search",
-                            prefixIcon: const Icon(
-                              Icons.search,
+                    if (snapshot.connectionState == ConnectionState.done && snapshot.hasData) {
+                      if (!initializedOnce) {
+                        initializedOnce = true;
+                        _nowPlayingResponseModel = snapshot.data!;
+                      }
+                      return Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.wb_sunny_outlined,
+                              ),
+                              Switch(
+                                  value: pr.darkThemeForCompleteApp,
+                                  onChanged: (value) async {
+                                    pr.saveTheme(!pr.darkThemeForCompleteApp, await SharedPreferences.getInstance());
+                                  }),
+                              const Icon(
+                                Icons.nightlight,
+                              )
+                            ],
+                          ),
+                          Container(
+                            height: 50,
+                            width: screenWidth,
+                            padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                            child: TextField(
+                              controller: _searchedTextController,
+                              decoration: InputDecoration(
+                                fillColor: pr.darkThemeForCompleteApp ? Colors.black54 : Colors.white,
+                                filled: true,
+                                hintText: "Search",
+                                prefixIcon: const Icon(
+                                  Icons.search,
+                                ),
+                                enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.transparent)),
+                                focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.transparent)),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                                suffixIcon: (_searchedTextController.text.isNotEmpty)
+                                    ? GestureDetector(
+                                        onTap: () {
+                                          _searchedTextController.text = "";
+                                          setState(() {
+                                            _searchedText = "";
+                                          });
+                                          FocusScope.of(context).unfocus(); // dismisses soft keyboard.
+                                        },
+                                        child: const Icon(
+                                          Icons.cancel,
+                                          color: Colors.grey,
+                                        ),
+                                      )
+                                    : null,
+                              ),
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchedText = value;
+                                });
+                              },
                             ),
-                            enabledBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.transparent)),
-                            focusedBorder: const OutlineInputBorder(borderSide: BorderSide(color: Colors.transparent)),
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                            suffixIcon: (_searchedTextController.text.isNotEmpty)
-                                ? GestureDetector(
-                                    onTap: () {
-                                      _searchedTextController.text = "";
-                                      setState(() {
-                                        _searchedText = "";
-                                      });
-                                      FocusScope.of(context).unfocus(); // dismisses soft keyboard.
-                                    },
-                                    child: const Icon(
-                                      Icons.cancel,
-                                      color: Colors.grey,
-                                    ),
-                                  )
-                                : null,
                           ),
-                          onChanged: (value) {
-                            setState(() {
-                              _searchedText = value;
-                            });
-                          },
-                        ),
-                      ),
-                      const Divider(
-                        height: 0,
-                        thickness: 1,
-                      ),
-                      Expanded(
-                        child: RefreshIndicator(
-                          onRefresh: () {
-                            setState(() {
-                              apiCalledOnce = false;
-                              initializedOnce = false;
-                            });
-                            return Future.value();
-                          },
-                          color: Colors.redAccent,
-                          backgroundColor: Colors.amber,
-                          child: ListView.builder(
-                            physics: const BouncingScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              var result = _nowPlayingResponseModel.results[index];
-
-                              Key key = UniqueKey();
-
-                              if (_searchedText.isNotEmpty) {
-                                if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
-                                  return _NowPlayingListTile(
-                                    screenHeight: screenHeight,
-                                    screenWidth: screenWidth,
-                                    result: result,
-                                    onDismissed: (direction) {
-                                      setState(() {
-                                        _nowPlayingResponseModel.results.removeAt(index);
-                                      });
-                                    },
-                                    dismissKey: key,
-                                  );
-                                }
-                                return Container();
-                              } else {
-                                return _NowPlayingListTile(
-                                  screenHeight: screenHeight,
-                                  screenWidth: screenWidth,
-                                  result: result,
-                                  dismissKey: key,
-                                  onDismissed: (direction) {
-                                    setState(() {
-                                      _nowPlayingResponseModel.results.removeAt(index);
-                                    });
-                                  },
-                                );
-                              }
-                            },
-                            itemCount: _nowPlayingResponseModel.results.length,
+                          const Divider(
+                            height: 0,
+                            thickness: 1,
                           ),
-                        ),
-                      ),
-                    ],
-                  );
-                }
+                          Expanded(
+                            child: RefreshIndicator(
+                              onRefresh: () {
+                                setState(() {
+                                  apiCalledOnce = false;
+                                  initializedOnce = false;
+                                });
+                                return Future.value();
+                              },
+                              color: Colors.redAccent,
+                              backgroundColor: Colors.amber,
+                              child: ListView.builder(
+                                physics: const BouncingScrollPhysics(),
+                                itemBuilder: (context, index) {
+                                  var result = _nowPlayingResponseModel.results[index];
 
-                return LoadingMoviesIndicator(screenWidth: screenWidth, screenHeight: screenHeight);
-              }),
-        ),
+                                  Key key = UniqueKey();
+
+                                  if (_searchedText.isNotEmpty) {
+                                    if (result.title.toLowerCase().contains(_searchedText.toLowerCase())) {
+                                      return _NowPlayingListTile(
+                                        screenHeight: screenHeight,
+                                        screenWidth: screenWidth,
+                                        result: result,
+                                        onDismissed: (direction) {
+                                          setState(() {
+                                            _nowPlayingResponseModel.results.removeAt(index);
+                                          });
+                                        },
+                                        dismissKey: key,
+                                      );
+                                    }
+                                    return Container();
+                                  } else {
+                                    return _NowPlayingListTile(
+                                      screenHeight: screenHeight,
+                                      screenWidth: screenWidth,
+                                      result: result,
+                                      dismissKey: key,
+                                      onDismissed: (direction) {
+                                        setState(() {
+                                          _nowPlayingResponseModel.results.removeAt(index);
+                                        });
+                                      },
+                                    );
+                                  }
+                                },
+                                itemCount: _nowPlayingResponseModel.results.length,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return LoadingMoviesIndicator(screenWidth: screenWidth, screenHeight: screenHeight);
+                  }),
+            ),
+          );
+        },
       );
     });
   }
