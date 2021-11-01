@@ -127,7 +127,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen> {
                                 return Future.value();
                               },
                               color: Colors.redAccent,
-                              backgroundColor: Colors.amber,
+                              backgroundColor: pr.darkThemeForCompleteApp ? Colors.black54 : Colors.amber,
                               child: ListView.builder(
                                 physics: const BouncingScrollPhysics(),
                                 itemBuilder: (context, index) {
